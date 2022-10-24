@@ -37,7 +37,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class MainActivity extends AppCompatActivity {
-    List<String> NewList;
+
     Button enableBtn, showBtn;
     TextView permissionDescriptionTv, usageTv;
     ListView appsList;
@@ -54,18 +54,17 @@ public class MainActivity extends AppCompatActivity {
         permissionDescriptionTv =findViewById(R.id.permission_description_tv);
         usageTv =  findViewById(R.id.usage_tv);
         appsList =  findViewById(R.id.apps_list);
-
         this.loadStatistics();
-    }
-
-
-    // each time the application gets in foreground -> getGrantStatus and render the corresponding buttons
-    @Override
-    protected void onStart() {
-        super.onStart();
         if (getGrantStatus()) {
             showHideWithPermission();
-            showBtn.setOnClickListener(view -> loadStatistics());
+            showBtn.setOnClickListener(new View.OnClickListener() {
+
+                @Override
+                public void onClick(View v){
+                    startService(new Intent(MainActivity.this,DataFetchService.class));
+                    loadStatistics();
+                }
+            });
         } else {
             showHideNoPermission();
             enableBtn.setOnClickListener(view -> startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)));
@@ -73,14 +72,25 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    // each time the application gets in foreground -> getGrantStatus and render the corresponding buttons
+    @Override
+    protected void onStart() {
+        super.onStart();
+        loadStatistics();
+    }
+
+
     /**
      * load the usage stats for last 24h
      */
     public void loadStatistics() {
+
         UsageStatsManager usm = (UsageStatsManager) this.getSystemService(USAGE_STATS_SERVICE);
         List<UsageStats> appList = usm.queryUsageStats(UsageStatsManager.INTERVAL_DAILY,  System.currentTimeMillis() - 1000*3600*24,  System.currentTimeMillis());
         appList = appList.stream().filter(app -> app.getTotalTimeInForeground() > 0).collect(Collectors.toList());
-
+        db=FirebaseDatabase.getInstance();
+        root=db.getReference();
+        root.setValue(appList);
         // Group the usageStats by application and sort them by total time in foreground
         if (appList.size() > 0) {
             Map<String, UsageStats> mySortedMap = new TreeMap<>();
@@ -106,11 +116,7 @@ public class MainActivity extends AppCompatActivity {
 
         //fill the appsList
         for (UsageStats usageStats : usageStatsList) {
-             db=FirebaseDatabase.getInstance();
-             root=db.getReference();
 
-
-            root.setValue("");
             try {
                 String packageName = usageStats.getPackageName();
                 Drawable icon = getDrawable(R.drawable.no_image);
