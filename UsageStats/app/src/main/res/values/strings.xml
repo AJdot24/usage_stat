@@ -1,4 +1,29 @@
 <resources>
     <string name="app_name">Usage Stats</string>
     <string name="permission_description">In order to allow this application to collect your apps usage information, you need to allow "Package Usage Stats" permission from the Settings application.\nYou can cancel this permission anytime.</string>
+    <string name="title_activity_login">LoginActivity</string>
+    <string name="prompt_email">Email</string>
+    <string name="prompt_password">Password</string>
+    <string name="action_sign_in">Sign in or register</string>
+    <string name="action_sign_in_short">Sign in</string>
+    <string name="welcome">"Welcome !"</string>
+    <string name="invalid_username">Not a valid username</string>
+    <string name="invalid_password">Password must be >5 characters</string>
+    <string name="login_failed">"Login failed"</string>
+    <string name="username">Username</string>
+    <string name="parentid" />
+    <string name="childid" />
+    <string name="login">Login</string>
+    <string name="register">Register</string>
+    <string name="parent_email">Parent Email</string>
+    <string name="mobile">Mobile</string>
+    <string name="child_name">Child Name</string>
+    <string name="parent_name">Parent Name</string>
+    <string name="password">password</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="registernow" />
+    <string name="don_t_have_an_account">Don\'t have an Account?</string>
+    <string name="register_now">Register Now</string>
+    <string name="login_here">Login Here</string>
+    <string name="login_now">Login Now</string>
 </resources>

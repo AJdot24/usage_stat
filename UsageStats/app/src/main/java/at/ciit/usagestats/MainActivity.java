@@ -15,12 +15,13 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.Settings;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -33,36 +34,62 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class MainActivity extends AppCompatActivity {
-
+    DatabaseReference db = FirebaseDatabase.getInstance().getReferenceFromUrl("https://usage-stats-828c8-default-rtdb.firebaseio.com/");
     Button enableBtn, showBtn;
     TextView permissionDescriptionTv, usageTv;
     ListView appsList;
-    FirebaseDatabase db;
-    DatabaseReference root;
+    private TextView phonemain,childnamemain;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toast.makeText(MainActivity.this,"Firebase connection Successful",Toast.LENGTH_LONG).show();
+
         enableBtn = findViewById(R.id.enable_btn);
         showBtn =  findViewById(R.id.show_btn);
         permissionDescriptionTv =findViewById(R.id.permission_description_tv);
         usageTv =  findViewById(R.id.usage_tv);
         appsList =  findViewById(R.id.apps_list);
-        this.loadStatistics();
+        phonemain=findViewById(R.id.phone);
+        childnamemain=findViewById(R.id.child_name);
+
+        this.loadStatistics(phonemain, childnamemain);
         if (getGrantStatus()) {
             showHideWithPermission();
             showBtn.setOnClickListener(new View.OnClickListener() {
 
                 @Override
                 public void onClick(View v){
-                    startService(new Intent(MainActivity.this,DataFetchService.class));
-                    loadStatistics();
+//                    startService(new Intent(MainActivity.this,DataFetchService.class));
+                    ExecutorService executor = Executors.newSingleThreadExecutor();
+                    Handler handler = new Handler(Looper.getMainLooper());
+
+                    executor.execute(new Runnable() {
+                        @Override
+                        public void run() {
+
+                            String phone=getIntent().getStringExtra("phone");
+                            String childname=getIntent().getStringExtra("childname");
+                            phonemain.setText(phone);
+                            childnamemain.setText(childname);
+                            loadStatistics(phonemain,childnamemain);
+                            //Background work here
+
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    //UI Thread work here
+                                }
+                            });
+                        }
+                    });
+
                 }
             });
         } else {
@@ -76,21 +103,28 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        loadStatistics();
+        loadStatistics(phonemain, childnamemain);
     }
 
 
     /**
      * load the usage stats for last 24h
+     * @param phonemain
+     * @param childnamemain
      */
-    public void loadStatistics() {
+    public void loadStatistics(TextView  phonemain, TextView childnamemain) {
 
         UsageStatsManager usm = (UsageStatsManager) this.getSystemService(USAGE_STATS_SERVICE);
         List<UsageStats> appList = usm.queryUsageStats(UsageStatsManager.INTERVAL_DAILY,  System.currentTimeMillis() - 1000*3600*24,  System.currentTimeMillis());
         appList = appList.stream().filter(app -> app.getTotalTimeInForeground() > 0).collect(Collectors.toList());
-        db=FirebaseDatabase.getInstance();
-        root=db.getReference();
-        root.setValue(appList);
+
+        FirebaseDatabase rootnode = FirebaseDatabase.getInstance();
+        DatabaseReference reference = rootnode.getReference("users");
+        //Log.d("CHECK",phonemain.getText().toString());
+        //reference.child(phonemain.getText().toString()).child(childnamemain.getText().toString()).push().setValue(appList);
+
+       db.child("users").child(phonemain.getText().toString()).child("childdetails").child("Appusagestats").setValue(appList);
+
         // Group the usageStats by application and sort them by total time in foreground
         if (appList.size() > 0) {
             Map<String, UsageStats> mySortedMap = new TreeMap<>();
@@ -161,7 +195,7 @@ public class MainActivity extends AppCompatActivity {
         AppOpsManager appOps = (AppOpsManager) getApplicationContext()
                 .getSystemService(Context.APP_OPS_SERVICE);
 
-        int mode = appOps.checkOpNoThrow(OPSTR_GET_USAGE_STATS,
+        int mode = appOps.unsafeCheckOp(OPSTR_GET_USAGE_STATS,
                 android.os.Process.myUid(), getApplicationContext().getPackageName());
 
         if (mode == AppOpsManager.MODE_DEFAULT) {
