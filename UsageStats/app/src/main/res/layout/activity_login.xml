@@ -35,6 +35,17 @@
         android:layout_marginEnd="20dp"
         android:paddingEnd="1dp"
         android:importantForAutofill="no" />
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="text"
+        android:id="@+id/uniqId"
+        android:hint="@string/child_name"
+        android:maxLines="1"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:paddingEnd="1dp"
+        android:importantForAutofill="no" />
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

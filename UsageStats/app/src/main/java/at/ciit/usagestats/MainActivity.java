@@ -58,7 +58,11 @@ public class MainActivity extends AppCompatActivity {
         appsList =  findViewById(R.id.apps_list);
         phonemain=findViewById(R.id.phone);
         childnamemain=findViewById(R.id.child_name);
-
+        Intent intent =getIntent();
+        String phone=intent.getStringExtra("parentname");
+        String childname=intent.getStringExtra("childname");
+        phonemain.setText(phone);
+        childnamemain.setText(childname);
         this.loadStatistics(phonemain, childnamemain);
         if (getGrantStatus()) {
             showHideWithPermission();
@@ -74,10 +78,6 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public void run() {
 
-                            String phone=getIntent().getStringExtra("phone");
-                            String childname=getIntent().getStringExtra("childname");
-                            phonemain.setText(phone);
-                            childnamemain.setText(childname);
                             loadStatistics(phonemain,childnamemain);
                             //Background work here
 
@@ -119,11 +119,10 @@ public class MainActivity extends AppCompatActivity {
         appList = appList.stream().filter(app -> app.getTotalTimeInForeground() > 0).collect(Collectors.toList());
 
         FirebaseDatabase rootnode = FirebaseDatabase.getInstance();
-        DatabaseReference reference = rootnode.getReference("users");
-        //Log.d("CHECK",phonemain.getText().toString());
-        //reference.child(phonemain.getText().toString()).child(childnamemain.getText().toString()).push().setValue(appList);
+        DatabaseReference reference = rootnode.getReference("users/"+phonemain.getText().toString()+"/children/"+childnamemain.getText().toString());
 
-       db.child("users").child(phonemain.getText().toString()).child("childdetails").child("Appusagestats").setValue(appList);
+
+       reference.child("AppDetails").setValue(appList);
 
         // Group the usageStats by application and sort them by total time in foreground
         if (appList.size() > 0) {
